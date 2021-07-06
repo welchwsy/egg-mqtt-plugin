@@ -51,31 +51,34 @@ class AppBootHook {
     });
 
     // 注册mqtt的publish事件
-    this.agent.messenger.on('mqtt-publish', data => {
-      this.agent.mqtt.publish(data.topic, data.message, data.options, err => {
+    this.agent.messenger.on('mqtt-publish', async data => {
+      try {
+        await this.agent.mqtt.publish(data.topic, data.message, data.options);
+      } catch (err) {
         this.agent.coreLogger.error('[egg-mqtt-plugin] publish error : %s', err);
         this.agent.messenger.sendTo(data.pid, data.action, err);
-      });
+      }
     });
 
     // 注册mqtt的subscribe事件
-    this.agent.messenger.on('mqtt-subscribe', data => {
-      this.agent.mqtt.subscribe(data.topic, data.options, (err, granted) => {
-        if (err) {
-          this.agent.coreLogger.error('[egg-mqtt-plugin] subscribe error : %s', err);
-          return;
-        }
+    this.agent.messenger.on('mqtt-subscribe', async data => {
+      try {
+        const granted = await this.agent.mqtt.subscribe(data.topic, data.options);
         this.agent.coreLogger.info('[egg-mqtt-plugin] subscribe succese : %s', granted);
-        this.agent.messenger.sendTo(data.pid, data.action, { err, granted });
-      });
+        this.agent.messenger.sendTo(data.pid, data.action, { granted });
+      } catch (err) {
+        return this.agent.coreLogger.error('[egg-mqtt-plugin] subscribe error : %s', err);
+      }
     });
 
     // 注册mqtt的unsubscribe事件
-    this.agent.messenger.on('mqtt-unsubscribe', data => {
-      this.agent.mqtt.unsubscribe(data.topic, data.options, err => {
+    this.agent.messenger.on('mqtt-unsubscribe', async data => {
+      try {
+        await this.agent.mqtt.unsubscribe(data.topic, data.options);
+      } catch (err) {
         this.agent.coreLogger.error('[egg-mqtt-plugin] unsubscribe error : %s', err);
         this.agent.messenger.sendTo(data.pid, data.action, err);
-      });
+      }
     });
   }
 

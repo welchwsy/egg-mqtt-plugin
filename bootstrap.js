@@ -10,27 +10,27 @@ class Mqtt {
   }
 
 
-  publish(topic, message, options, callback) {
+  async publish(topic, message, options) {
     const action = `mqtt-publish:${v4()}`;
     const data = { topic, message, options, action, pid: this.pid };
-    this.action('mqtt-publish', data, callback, action);
+    return await this.action('mqtt-publish', data, action);
   }
 
-  subscribe(topic, options, callback) {
+  async subscribe(topic, options) {
     const action = `mqtt-subscribe:${v4()}`;
     const data = { topic, options, action, pid: this.pid };
-    this.action('mqtt-subscribe', data, callback, action);
+    return await this.action('mqtt-subscribe', data, action);
   }
 
-  unsubscribe(topic, options, callback) {
+  async unsubscribe(topic, options) {
     const action = `mqtt-unsubscribe:${v4()}`;
     const data = { topic, options, action, pid: this.pid };
-    this.action('mqtt-unsubscribe', data, callback, action);
+    return await this.action('mqtt-unsubscribe', data, action);
   }
 
-  message(callback) {
+  async message() {
     this.app.messenger.on('mqtt-subscribe', data => {
-      callback(data.topic, data.message);
+      return data;
     });
   }
 
@@ -39,20 +39,18 @@ class Mqtt {
    * 进程间通讯
    * @param {string} name
    * @param {*} data
-   * @param {function} callback
    * @param {string} action
    */
-  action(name, data, callback, action) {
+  async action(name, data, action) {
 
     this.app.messenger.sendToAgent(name, data);
 
     // 提供回调函数
     this.app.messenger.once(action, data => {
       if (data.granted) {
-        callback(data.err, data.granted);
-      } else {
-        callback(data);
+        return data.granted;
       }
+      return data;
     });
   }
 
